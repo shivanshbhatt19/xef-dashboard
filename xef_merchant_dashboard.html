@@ -190,12 +190,73 @@
   .empty-state svg { margin-bottom:10px; opacity:0.35; }
   .empty-state p { font-size:13.5px; }
 
+  /* 4. Logout button — red tint on hover */
+  .btn-logout:hover { color:#dc2626; border-color:#fca5a5; background:#fff5f5; }
+
   /* Settlement pane */
   .settlement-content { padding:22px 26px; flex:1; }
   .settlement-header-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
   .settlement-title { font-size:15px; font-weight:600; }
   .settlement-sub { font-size:12px; color:var(--text-secondary); margin-top:2px; }
   .settle-row-highlight { background:#f2f9e6 !important; outline:2px solid #8dc63f; outline-offset:-2px; }
+
+  /* Settlement stats */
+  .settle-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+
+  /* Customer name link in settlement table */
+  .cust-link { background:none; border:none; padding:0; cursor:pointer; font-family:'DM Sans',sans-serif; text-align:left; }
+  .cust-link .customer-name { color:var(--accent-dark); text-decoration:underline; text-underline-offset:2px; }
+  .cust-link:hover .customer-name { color:#4a7a1e; }
+
+  /* 2. Date range picker */
+  .date-range-wrap { position:relative; }
+  .date-range-btn {
+    display:inline-flex; align-items:center; gap:7px; padding:7px 12px;
+    border:1px solid var(--border); border-radius:7px; background:var(--surface-2);
+    font-size:12.5px; font-family:'DM Sans',sans-serif; color:var(--text-primary);
+    cursor:pointer; transition:border-color 0.15s; white-space:nowrap; user-select:none;
+  }
+  .date-range-btn:hover { border-color:var(--accent); }
+  .date-range-btn.active { border-color:var(--accent); background:var(--accent-light); color:var(--accent-dark); }
+  .date-range-btn svg { color:var(--text-muted); flex-shrink:0; }
+
+  .date-picker-panel {
+    display:none; position:absolute; top:calc(100% + 8px); left:0; z-index:200;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.12); padding:16px; width:580px;
+  }
+  .date-picker-panel.open { display:block; }
+  .dp-months { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .dp-month-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .dp-month-nav { background:none; border:1px solid var(--border); border-radius:6px; width:26px; height:26px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--text-muted); transition:all 0.15s; }
+  .dp-month-nav:hover { border-color:var(--accent); color:var(--accent-dark); }
+  .dp-month-label { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .dp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .dp-dow { font-size:10px; font-weight:600; text-align:center; color:var(--text-muted); padding:4px 0; text-transform:uppercase; letter-spacing:0.3px; }
+  .dp-day {
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font-size:12px; border-radius:6px; cursor:pointer; transition:all 0.1s; color:var(--text-primary);
+    border:none; background:none; font-family:'DM Sans',sans-serif;
+  }
+  .dp-day:hover:not(.dp-day-empty):not(.dp-day-disabled) { background:var(--surface-2); }
+  .dp-day.dp-day-empty { pointer-events:none; }
+  .dp-day.dp-day-disabled { color:var(--text-muted); opacity:0.4; pointer-events:none; }
+  .dp-day.dp-day-start, .dp-day.dp-day-end { background:var(--accent); color:#111317; font-weight:700; }
+  .dp-day.dp-day-in-range { background:var(--accent-light); color:var(--accent-dark); border-radius:0; }
+  .dp-day.dp-day-start { border-radius:6px 0 0 6px; }
+  .dp-day.dp-day-end { border-radius:0 6px 6px 0; }
+  .dp-day.dp-day-start.dp-day-end { border-radius:6px; }
+  .dp-day.dp-day-today { font-weight:700; box-shadow:inset 0 0 0 1.5px var(--accent); }
+
+  .dp-footer { display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:12px; border-top:1px solid var(--border); gap:8px; }
+  .dp-presets { display:flex; gap:6px; flex-wrap:wrap; }
+  .dp-preset { padding:4px 10px; border:1px solid var(--border); border-radius:20px; font-size:11.5px; cursor:pointer; background:var(--surface-2); color:var(--text-secondary); transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+  .dp-preset:hover { border-color:var(--accent); color:var(--accent-dark); background:var(--accent-light); }
+  .dp-actions { display:flex; gap:8px; }
+  .dp-clear { padding:6px 14px; border:1px solid var(--border); border-radius:7px; background:none; font-size:12.5px; cursor:pointer; color:var(--text-muted); font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+  .dp-clear:hover { border-color:#fca5a5; color:#dc2626; }
+  .dp-apply { padding:6px 16px; border:none; border-radius:7px; background:var(--accent); font-size:12.5px; font-weight:600; cursor:pointer; color:#111317; font-family:'DM Sans',sans-serif; transition:background 0.15s; }
+  .dp-apply:hover { background:var(--accent-dark); color:white; }
 
   @keyframes spin { to { transform:rotate(360deg); } }
 </style>
@@ -286,7 +347,7 @@
           Transaction Ledger
         </a>
         <a class="nav-item" id="nav-settlement" onclick="switchPane('settlement')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="3" y="18" font-size="16" font-family="sans-serif" fill="currentColor" stroke="none">₹</text></svg>
           Settlement
         </a>
       </nav>
@@ -313,7 +374,7 @@
           </div>
           <div class="header-right">
             <div class="date-badge" id="header-date">—</div>
-            <button class="btn-logout" onclick="handleLogout()">← Switch Store</button>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
           </div>
         </header>
         <div class="content">
@@ -342,7 +403,51 @@
           <div class="controls-bar">
             <div class="search-wrap">
               <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input type="text" class="search-input" id="search-input" placeholder="Search customer, phone, device…" oninput="applyFilters()">
+              <input type="text" class="search-input" id="search-input" placeholder="Search customer name…" oninput="applyFilters()">
+            </div>
+            <div class="search-wrap">
+              <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.93-.93a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+              <input type="text" class="search-input" id="search-phone" placeholder="Search mobile number…" oninput="applyFilters()">
+            </div>
+            <div class="divider-v"></div>
+            <!-- Date range picker -->
+            <div class="date-range-wrap" id="drp-wrap">
+              <button class="date-range-btn" id="drp-btn" onclick="toggleDatePicker()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span id="drp-label">All Dates</span>
+              </button>
+              <div class="date-picker-panel" id="drp-panel">
+                <div class="dp-months">
+                  <div>
+                    <div class="dp-month-header">
+                      <button class="dp-month-nav" onclick="dpNav(-1)">‹</button>
+                      <span class="dp-month-label" id="dp-m0-label">—</span>
+                      <span></span>
+                    </div>
+                    <div class="dp-grid" id="dp-m0"></div>
+                  </div>
+                  <div>
+                    <div class="dp-month-header">
+                      <span></span>
+                      <span class="dp-month-label" id="dp-m1-label">—</span>
+                      <button class="dp-month-nav" onclick="dpNav(1)">›</button>
+                    </div>
+                    <div class="dp-grid" id="dp-m1"></div>
+                  </div>
+                </div>
+                <div class="dp-footer">
+                  <div class="dp-presets">
+                    <button class="dp-preset" onclick="dpPreset(7)">Last 7 days</button>
+                    <button class="dp-preset" onclick="dpPreset(30)">Last 30 days</button>
+                    <button class="dp-preset" onclick="dpPreset(90)">Last 90 days</button>
+                    <button class="dp-preset" onclick="dpPresetMTD()">MTD</button>
+                  </div>
+                  <div class="dp-actions">
+                    <button class="dp-clear" onclick="dpClear()">Clear</button>
+                    <button class="dp-apply" onclick="dpApply()">Apply</button>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="divider-v"></div>
             <div class="result-count" id="result-count">—</div>
@@ -377,15 +482,36 @@
           </div>
           <div class="header-right">
             <div class="date-badge" id="settle-header-date">—</div>
-            <button class="btn-logout" onclick="handleLogout()">← Switch Store</button>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
           </div>
         </header>
         <div class="settlement-content">
-          <div class="settlement-header-bar">
-            <div>
-              <div class="settlement-title">Settlement Records</div>
-              <div class="settlement-sub" id="settle-count-label">—</div>
+          <!-- 9. Stats strip -->
+          <div class="settle-stats">
+            <div class="stat-card">
+              <div class="stat-label">Total Transactions</div>
+              <div class="stat-value green" id="settle-stat-total">—</div>
+              <div class="stat-sub">transactions</div>
             </div>
+            <div class="stat-card">
+              <div class="stat-label">Settled</div>
+              <div class="stat-value" id="settle-stat-settled" style="color:var(--settled)">—</div>
+              <div class="stat-sub">transactions</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Unsettled</div>
+              <div class="stat-value" id="settle-stat-unsettled" style="color:#d97706">—</div>
+              <div class="stat-sub">transactions</div>
+            </div>
+          </div>
+          <!-- 7. Search bar -->
+          <div class="controls-bar" style="margin-bottom:14px;">
+            <div class="search-wrap">
+              <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" class="search-input" id="settle-search" placeholder="Search customer name, phone…" oninput="applySettleSearch()">
+            </div>
+            <div class="divider-v"></div>
+            <div class="result-count" id="settle-result-count">—</div>
           </div>
           <div class="table-wrap">
             <div class="table-scroll">
@@ -393,7 +519,7 @@
                 <thead>
                   <tr>
                     <th><div class="th-inner"><span class="th-label" onclick="sortSettlement('_sno')">#</span></div></th>
-                    <th><div class="th-inner"><span class="th-label" onclick="sortSettlement('transaction_date')">Date</span></div></th>
+                    <th><div class="th-inner"><span class="th-label" onclick="sortSettlement('transaction_date')">Transaction Date</span></div></th>
                     <th><div class="th-inner"><span class="th-label" onclick="sortSettlement('customer_name')">Customer</span></div></th>
                     <th id="settle-th-store" style="display:none"><div class="th-inner"><span class="th-label" onclick="sortSettlement('store_name')">Store</span></div></th>
                     <th id="settle-th-child" style="display:none"><div class="th-inner"><span class="th-label" onclick="sortSettlement('Child_Id')">Child DMS</span></div></th>
@@ -437,67 +563,67 @@
 // Run: python3 -m http.server 8080
 // ─────────────────────────────────────────────────────────────────────
 
-let authLookup   = [], allData      = [], storeData    = [];
-let filteredData = [], currentUser  = null;
-let currentPage = 1, perPage = 25;
-let sortCol = 'transaction_date', sortDir = 'desc';
-let colFilters = {};
-let settleData = [], settlePage = 1, settlePerPage = 25;
-let settleSortCol = 'transaction_date', settleSortDir = 'desc';
-let pendingScrollIdx = null;
+let authLookup=[], allData=[], storeData=[];
+let filteredData=[], currentUser=null;
+let currentPage=1, perPage=25;
+let sortCol='transaction_date', sortDir='desc';
+let colFilters={};
+let settleAllData=[], settleFiltered=[], settlePage=1, settlePerPage=25;
+let settleSortCol='transaction_date', settleSortDir='desc';
+let pendingScrollIdx=null;
+// Date range
+let dpStart=null, dpEnd=null, dpSelecting=null;
+let dpAppliedStart=null, dpAppliedEnd=null;
+let dpViewYear, dpViewMonth;
 
 // ── CSV ──
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().replace(/\r/g,''));
-  return lines.slice(1).map((line, idx) => {
-    const cols = []; let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch==='"') { inQ=!inQ; } else if (ch===','&&!inQ) { cols.push(cur.trim()); cur=''; } else { cur+=ch; }
-    }
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/\r/g,''));
+  return lines.slice(1).map((line,idx)=>{
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=ch;}}
     cols.push(cur.trim());
-    const row = { _sno: idx+1 };
-    headers.forEach((h,i) => { row[h]=(cols[i]||'').replace(/\r/g,''); });
+    const row={_sno:idx+1};
+    headers.forEach((h,i)=>{row[h]=(cols[i]||'').replace(/\r/g,'');});
     return row;
   });
 }
-async function fetchAuthLookup() { const r=await fetch('./xef_auth_lookup.csv'); if(!r.ok) throw new Error(r.status); return parseCSV(await r.text()); }
-async function fetchTransactions() { const r=await fetch('./xef_rrf_auth.csv'); if(!r.ok) throw new Error(r.status); return parseCSV(await r.text()); }
+async function fetchAuthLookup(){const r=await fetch('./xef_auth_lookup.csv');if(!r.ok)throw new Error(r.status);return parseCSV(await r.text());}
+async function fetchTransactions(){const r=await fetch('./xef_rrf_auth.csv');if(!r.ok)throw new Error(r.status);return parseCSV(await r.text());}
 
 // ── Helpers ──
-const fmt     = n => '₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:0});
-const fmtDate = s => { if(!s) return '—'; const d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
-const esc     = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-const fmtAmt  = v => (v && parseFloat(v)) ? fmt(parseFloat(v)) : '—';
-const isRRFParent = () => currentUser?.store_type === 'RRF_parent';
+const fmt=n=>'₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:0});
+const fmtDate=s=>{if(!s)return '—';const d=new Date(s);return isNaN(d)?s:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const fmtAmt=v=>(v&&parseFloat(v))?fmt(parseFloat(v)):'—';
+const isRRFParent=()=>currentUser?.store_type==='RRF_parent';
+const parseRowDate=r=>{const d=new Date(r.transaction_date);return isNaN(d)?null:d;};
 
 // ── Login ──
-function clearError() {
-  ['login-error','err-dms','err-password'].forEach(id => document.getElementById(id).classList.remove('show'));
-}
+function clearError(){['login-error','err-dms','err-password'].forEach(id=>document.getElementById(id).classList.remove('show'));}
 
-async function handleLogin() {
+async function handleLogin(){
   const dms=document.getElementById('input-dms').value.trim();
   const pwd=document.getElementById('input-password').value.trim();
   let ok=true;
   if(!dms){document.getElementById('err-dms').classList.add('show');ok=false;}
   if(!pwd){document.getElementById('err-password').classList.add('show');ok=false;}
-  if(!ok) return;
+  if(!ok)return;
   const btn=document.getElementById('btn-login');
-  btn.classList.add('loading'); btn.disabled=true;
-  try {
-    if(!authLookup.length) authLookup=await fetchAuthLookup();
-    if(!allData.length)    allData=await fetchTransactions();
+  btn.classList.add('loading');btn.disabled=true;
+  try{
+    if(!authLookup.length)authLookup=await fetchAuthLookup();
+    if(!allData.length)allData=await fetchTransactions();
     const auth=authLookup.find(r=>String(r.dms_id).trim()===dms&&String(r.password).trim()===pwd);
     if(!auth){document.getElementById('login-error').classList.add('show');btn.classList.remove('loading');btn.disabled=false;return;}
     currentUser={dms_id:auth.dms_id.trim(),store_type:auth.store_type.trim(),parent_dms_id:auth.parent_dms_id.trim()};
-    if(currentUser.store_type==='RRF_parent') storeData=allData.filter(r=>String(r.parent_dms_id).trim()===currentUser.dms_id);
-    else if(currentUser.store_type==='RRF_child') storeData=allData.filter(r=>String(r.Child_Id).trim()===currentUser.dms_id);
+    if(currentUser.store_type==='RRF_parent')storeData=allData.filter(r=>String(r.parent_dms_id).trim()===currentUser.dms_id);
+    else if(currentUser.store_type==='RRF_child')storeData=allData.filter(r=>String(r.Child_Id).trim()===currentUser.dms_id);
     else storeData=allData.filter(r=>String(r.dms_id).trim()===currentUser.dms_id);
     if(!storeData.length){const e=document.getElementById('login-error');e.textContent='Account verified but no transactions found.';e.classList.add('show');btn.classList.remove('loading');btn.disabled=false;return;}
     bootDashboard();
-  } catch(e) {
+  }catch(e){
     const err=document.getElementById('login-error');
     err.textContent='Could not load data. Ensure CSV files are in same folder and use python3 -m http.server 8080.';
     err.classList.add('show');btn.classList.remove('loading');btn.disabled=false;
@@ -507,7 +633,7 @@ document.getElementById('input-dms').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('input-password').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin();});
 
 // ── Boot ──
-function bootDashboard() {
+function bootDashboard(){
   const dms=currentUser.dms_id;
   const name=isRRFParent()?`DMS ${dms}`:(storeData[0].store_name||`Store ${dms}`);
   const short=name.length>24?name.slice(0,22)+'…':name;
@@ -519,16 +645,18 @@ function bootDashboard() {
   const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   document.getElementById('header-date').textContent=today;
   document.getElementById('settle-header-date').textContent=today;
-
-  // RRF parent extra settlement columns
   const showRRF=isRRFParent();
   document.getElementById('settle-th-store').style.display=showRRF?'':'none';
   document.getElementById('settle-th-child').style.display=showRRF?'':'none';
-
-  settleData=[...storeData];
-  colFilters={}; filteredData=[]; currentPage=1; settlePage=1;
+  settleAllData=[...storeData];
+  settleFiltered=[...storeData];
+  colFilters={};filteredData=[];currentPage=1;settlePage=1;
+  dpAppliedStart=null;dpAppliedEnd=null;dpStart=null;dpEnd=null;
+  document.getElementById('drp-label').textContent='All Dates';
+  document.getElementById('drp-btn').classList.remove('active');
   buildTableHead();
   applyFilters();
+  updateSettleStats();
   renderSettlement();
   switchPane('ledger');
   document.getElementById('login-screen').style.display='none';
@@ -536,12 +664,13 @@ function bootDashboard() {
 }
 
 // ── Pane switch ──
-function switchPane(pane) {
+function switchPane(pane){
   ['ledger','settlement'].forEach(p=>{
     document.getElementById(`pane-${p}`).classList.toggle('active',p===pane);
     document.getElementById(`nav-${p}`).classList.toggle('active',p===pane);
   });
-  if(pane==='settlement'&&pendingScrollIdx!==null) {
+  closeDatePicker();
+  if(pane==='settlement'&&pendingScrollIdx!==null){
     setTimeout(()=>{
       const row=document.getElementById(`settle-row-${pendingScrollIdx}`);
       if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.classList.add('settle-row-highlight');setTimeout(()=>row.classList.remove('settle-row-highlight'),2500);}
@@ -550,17 +679,14 @@ function switchPane(pane) {
   }
 }
 
-// ── Table head with col filters ──
-function getLedgerCols() {
+// ── Ledger table head ──
+function getLedgerCols(){
   const cols=[
-    {key:'_sno',label:'#'},
-    {key:'transaction_date',label:'Date'},
-    {key:'customer_name',label:'Customer'},
+    {key:'transaction_date',label:'Transaction Date'},
+    {key:'customer_name',label:'Customer Name'},
+    {key:'customer_phone_no',label:'Mobile No.'},
   ];
-  if(isRRFParent()){
-    cols.push({key:'store_name',label:'Store Name'});
-    cols.push({key:'Child_Id',label:'Child DMS'});
-  }
+  if(isRRFParent()){cols.push({key:'store_name',label:'Store Name'});cols.push({key:'Child_Id',label:'Child DMS'});}
   cols.push(
     {key:'sku_name',label:'Device'},
     {key:'vas_name',label:'VAS'},
@@ -572,37 +698,47 @@ function getLedgerCols() {
   return cols;
 }
 
-function buildTableHead() {
+function buildTableHead(){
   const cols=getLedgerCols();
-  document.getElementById('table-head').innerHTML=`<tr>${cols.map(c=>`
-    <th><div class="th-inner">
+  // # col has no filter input (feedback #5)
+  document.getElementById('table-head').innerHTML=`<tr>
+    <th><div class="th-inner"><span class="th-label" style="cursor:default">#</span></div></th>
+    ${cols.map(c=>`<th><div class="th-inner">
       <span class="th-label" id="th-${c.key}" onclick="sortTable('${c.key}')">${c.label}</span>
       <input class="col-filter" placeholder="Filter…" oninput="setColFilter('${c.key}',this.value)" value="${esc(colFilters[c.key]||'')}">
     </div></th>`).join('')}</tr>`;
 }
-
 function setColFilter(col,val){colFilters[col]=val.trim();currentPage=1;applyFilters();}
 
-// ── Filters ──
-function applyFilters() {
+// ── Ledger filters ──
+function applyFilters(){
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  const qp=(document.getElementById('search-phone')?.value||'').toLowerCase();
   filteredData=storeData.filter(r=>{
-    if(q){const hay=[r.customer_name,r.customer_phone_no,r.sku_name,r.sku_variant,r.vas_name,r.store_name].join(' ').toLowerCase();if(!hay.includes(q))return false;}
-    for(const[col,val]of Object.entries(colFilters)){if(!val)continue;if(!String(r[col]||'').toLowerCase().includes(val.toLowerCase()))return false;}
+    if(q&&!String(r.customer_name||'').toLowerCase().includes(q))return false;
+    if(qp&&!String(r.customer_phone_no||'').toLowerCase().includes(qp))return false;
+    if(dpAppliedStart||dpAppliedEnd){
+      const d=parseRowDate(r);
+      if(!d)return false;
+      if(dpAppliedStart&&d<dpAppliedStart)return false;
+      if(dpAppliedEnd){const end=new Date(dpAppliedEnd);end.setHours(23,59,59,999);if(d>end)return false;}
+    }
+    for(const[col,val]of Object.entries(colFilters)){
+      if(!val)continue;
+      if(!String(r[col]||'').toLowerCase().includes(val.toLowerCase()))return false;
+    }
     return true;
   });
-  sortData(); currentPage=1; updateStats(); renderTable();
+  sortData();currentPage=1;updateStats();renderTable();
 }
 
 function sortTable(col){
-  sortDir=sortCol===col?(sortDir==='asc'?'desc':'asc'):'desc'; sortCol=col;
+  sortDir=sortCol===col?(sortDir==='asc'?'desc':'asc'):'desc';sortCol=col;
   document.querySelectorAll('.th-label').forEach(el=>el.classList.remove('sort-asc','sort-desc'));
-  const el=document.getElementById(`th-${col}`);
-  if(el)el.classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
-  sortData(); renderTable();
+  const el=document.getElementById(`th-${col}`);if(el)el.classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
+  sortData();renderTable();
 }
-
-function sortData() {
+function sortData(){
   const nums=['cart_value','tenure','device_value','downpayment','processing_fee','mdr_amount','_sno'];
   filteredData.sort((a,b)=>{
     let av=a[sortCol]??'',bv=b[sortCol]??'';
@@ -612,8 +748,8 @@ function sortData() {
   });
 }
 
-// ── Stats ──
-function updateStats() {
+// ── Ledger stats ──
+function updateStats(){
   const total=filteredData.length;
   const cartSum=filteredData.reduce((s,r)=>s+(parseFloat(r.cart_value)||0),0);
   const tenures=filteredData.map(r=>parseFloat(r.tenure)||0).filter(t=>t>0);
@@ -627,12 +763,13 @@ function updateStats() {
   document.getElementById('result-count').innerHTML=`<strong>${total}</strong> result${total!==1?'s':''}`;
 }
 
-// ── Render Ledger ──
-function renderTable() {
+// ── Render ledger ──
+function renderTable(){
   const cols=getLedgerCols();
+  const colCount=cols.length+1;
   const tbody=document.getElementById('table-body');
   if(!filteredData.length){
-    tbody.innerHTML=`<tr><td colspan="${cols.length}"><div class="empty-state"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>No transactions match your filters</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="${colCount}"><div class="empty-state"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>No transactions match your filters</p></div></td></tr>`;
     updatePagination();return;
   }
   const start=(currentPage-1)*perPage;
@@ -640,16 +777,16 @@ function renderTable() {
     const settled=(r.settlement||'').toLowerCase()==='settled';
     const globalIdx=storeData.indexOf(r);
     const cells=cols.map(c=>`<td>${renderCell(c.key,r,start+i,settled,globalIdx)}</td>`).join('');
-    return `<tr>${cells}</tr>`;
+    return `<tr><td style="color:var(--text-muted);font-size:11.5px;font-family:'DM Mono',monospace">${start+i+1}</td>${cells}</tr>`;
   }).join('');
   updatePagination();
 }
 
 function renderCell(key,r,i,settled,globalIdx){
   switch(key){
-    case '_sno':             return `<span style="color:var(--text-muted);font-size:11.5px;font-family:'DM Mono',monospace">${i+1}</span>`;
     case 'transaction_date': return `<span style="white-space:nowrap;font-size:12px;">${fmtDate(r.transaction_date)}</span>`;
-    case 'customer_name':    return `<div class="customer-cell"><div class="customer-name">${esc(r.customer_name||'—')}</div><div class="customer-phone">${esc(r.customer_phone_no||'—')}</div></div>`;
+    case 'customer_name':    return `<span style="font-weight:500;font-size:12.5px;">${esc(r.customer_name||'—')}</span>`;
+    case 'customer_phone_no':return `<span style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text-secondary)">${esc(r.customer_phone_no||'—')}</span>`;
     case 'store_name':       return `<span style="font-size:12px;">${esc(r.store_name||'—')}</span>`;
     case 'Child_Id':         return `<span style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text-secondary)">${esc(r.Child_Id||'—')}</span>`;
     case 'sku_name':         return `<div class="device-cell"><div class="device-name">${esc(r.sku_name||'—')}</div><div class="device-variant">${esc(r.sku_variant||'')}</div></div>`;
@@ -658,22 +795,69 @@ function renderCell(key,r,i,settled,globalIdx){
     case 'cart_value':       return `<span class="amount">${fmtAmt(r.cart_value)}</span>`;
     case 'tenure':           return `<span style="font-family:'DM Mono',monospace;font-size:12px;">${esc(r.tenure||'—')}${r.tenure?'m':''}</span>`;
     case 'settlement':
-      if(settled) return `<button class="settlement-link settled" onclick="goToSettlement(${globalIdx})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Settled</button>`;
+      if(settled)return `<button class="settlement-link settled" onclick="goToSettlement(${globalIdx})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Settled</button>`;
       return `<span class="settlement-link pending">Pending</span>`;
-    default: return esc(r[key]||'—');
+    default:return esc(r[key]||'—');
   }
 }
 
-// ── Settlement navigation from ledger ──
-function goToSettlement(storeDataIdx) {
+// ── Cross-pane navigation ──
+function goToSettlement(storeDataIdx){
   const row=storeData[storeDataIdx];
-  const settleIdx=settleData.indexOf(row);
-  if(settleIdx===-1) return;
+  const settleIdx=settleFiltered.indexOf(row);
+  if(settleIdx===-1)return;
   const page=Math.floor(settleIdx/settlePerPage)+1;
-  settlePage=page;
-  renderSettlement();
+  settlePage=page;renderSettlement();
   pendingScrollIdx=settleIdx;
   switchPane('settlement');
+}
+
+function goToLedger(storeDataIdx){
+  const row=storeData[storeDataIdx];
+  let idx=filteredData.indexOf(row);
+  if(idx===-1){
+    // clear filters to find the row
+    document.getElementById('search-input').value='';
+    document.getElementById('search-phone').value='';
+    colFilters={};dpAppliedStart=null;dpAppliedEnd=null;
+    document.getElementById('drp-label').textContent='All Dates';
+    document.getElementById('drp-btn').classList.remove('active');
+    applyFilters();
+    idx=filteredData.indexOf(row);
+  }
+  if(idx!==-1){const page=Math.floor(idx/perPage)+1;currentPage=page;renderTable();}
+  switchPane('ledger');
+  setTimeout(()=>{
+    if(idx===-1)return;
+    const rowOnPage=idx-((currentPage-1)*perPage);
+    const rows=document.querySelectorAll('#table-body tr');
+    if(rows[rowOnPage]){
+      rows[rowOnPage].scrollIntoView({behavior:'smooth',block:'center'});
+      rows[rowOnPage].style.transition='background 0.4s';
+      rows[rowOnPage].style.background='#f2f9e6';
+      setTimeout(()=>{rows[rowOnPage].style.background='';},2500);
+    }
+  },120);
+}
+
+// ── Settlement search ──
+function applySettleSearch(){
+  const q=(document.getElementById('settle-search')?.value||'').toLowerCase();
+  settleFiltered=settleAllData.filter(r=>{
+    if(!q)return true;
+    return [r.customer_name,r.customer_phone_no].join(' ').toLowerCase().includes(q);
+  });
+  settlePage=1;updateSettleStats();renderSettlement();
+}
+
+// ── Settlement stats ──
+function updateSettleStats(){
+  const total=settleFiltered.length;
+  const settled=settleFiltered.filter(r=>(r.settlement||'').toLowerCase()==='settled').length;
+  document.getElementById('settle-stat-total').textContent=total;
+  document.getElementById('settle-stat-settled').textContent=settled;
+  document.getElementById('settle-stat-unsettled').textContent=total-settled;
+  document.getElementById('settle-result-count').innerHTML=`<strong>${total}</strong> result${total!==1?'s':''}`;
 }
 
 // ── Settlement sort + render ──
@@ -681,31 +865,35 @@ function sortSettlement(col){
   settleSortDir=settleSortCol===col?(settleSortDir==='asc'?'desc':'asc'):'desc';
   settleSortCol=col;
   const nums=['cart_value','device_value','accessory_value','vas_price','downpayment','mdr_amount','processing_fee','settled_amount','_sno'];
-  settleData.sort((a,b)=>{
+  settleFiltered.sort((a,b)=>{
     let av=a[col]??'',bv=b[col]??'';
     if(nums.includes(col)){av=parseFloat(av)||0;bv=parseFloat(bv)||0;}
     else{av=String(av).toLowerCase();bv=String(bv).toLowerCase();}
     return av<bv?(settleSortDir==='asc'?-1:1):av>bv?(settleSortDir==='asc'?1:-1):0;
   });
-  settlePage=1; renderSettlement();
+  settlePage=1;renderSettlement();
 }
 
 function renderSettlement(){
   const tbody=document.getElementById('settle-body');
-  const total=settleData.length;
+  const total=settleFiltered.length;
   const start=(settlePage-1)*settlePerPage;
-  const slice=settleData.slice(start,start+settlePerPage);
-  document.getElementById('settle-count-label').textContent=`${total} transaction${total!==1?'s':''}`;
+  const slice=settleFiltered.slice(start,start+settlePerPage);
   const showRRF=isRRFParent();
   if(!slice.length){tbody.innerHTML=`<tr><td colspan="16"><div class="empty-state"><p>No settlement records</p></div></td></tr>`;updateSettlePagination();return;}
   tbody.innerHTML=slice.map((r,i)=>{
     const gi=start+i;
     const settled=(r.settlement||'').toLowerCase()==='settled';
+    const storeDataIdx=storeData.indexOf(r);
     const rrfCells=showRRF?`<td style="font-size:12px;">${esc(r.store_name||'—')}</td><td class="mono">${esc(r.Child_Id||'—')}</td>`:'';
+    const custCell=`<button class="cust-link" onclick="goToLedger(${storeDataIdx})">
+      <div class="customer-name">${esc(r.customer_name||'—')}</div>
+      <div class="customer-phone">${esc(r.customer_phone_no||'—')}</div>
+    </button>`;
     return `<tr id="settle-row-${gi}">
       <td class="mono" style="color:var(--text-muted)">${gi+1}</td>
       <td style="white-space:nowrap;font-size:12px;">${fmtDate(r.transaction_date)}</td>
-      <td><div class="customer-cell"><div class="customer-name">${esc(r.customer_name||'—')}</div><div class="customer-phone">${esc(r.customer_phone_no||'—')}</div></div></td>
+      <td>${custCell}</td>
       ${rrfCells}
       <td><span class="amount">${fmtAmt(r.cart_value)}</span></td>
       <td><span class="amount">${fmtAmt(r.device_value)}</span></td>
@@ -723,13 +911,96 @@ function renderSettlement(){
   updateSettlePagination();
 }
 
+// ── Date picker ──
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOWS=['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function toggleDatePicker(){
+  const panel=document.getElementById('drp-panel');
+  if(panel.classList.contains('open')){closeDatePicker();return;}
+  const now=new Date();
+  dpViewYear=now.getFullYear();dpViewMonth=now.getMonth()-1;
+  if(dpViewMonth<0){dpViewMonth=11;dpViewYear--;}
+  dpStart=dpAppliedStart?new Date(dpAppliedStart):null;
+  dpEnd=dpAppliedEnd?new Date(dpAppliedEnd):null;
+  renderCalendars();
+  panel.classList.add('open');
+}
+function closeDatePicker(){document.getElementById('drp-panel')?.classList.remove('open');}
+document.addEventListener('click',e=>{const wrap=document.getElementById('drp-wrap');if(wrap&&!wrap.contains(e.target))closeDatePicker();});
+
+function dpNav(dir){
+  dpViewMonth+=dir;
+  if(dpViewMonth>11){dpViewMonth=0;dpViewYear++;}
+  if(dpViewMonth<0){dpViewMonth=11;dpViewYear--;}
+  renderCalendars();
+}
+function renderCalendars(){
+  renderOneMonth(0,dpViewYear,dpViewMonth);
+  let y2=dpViewYear,m2=dpViewMonth+1;
+  if(m2>11){m2=0;y2++;}
+  renderOneMonth(1,y2,m2);
+}
+function renderOneMonth(idx,year,month){
+  document.getElementById(`dp-m${idx}-label`).textContent=`${MONTHS[month]} ${year}`;
+  const grid=document.getElementById(`dp-m${idx}`);
+  const today=new Date();today.setHours(0,0,0,0);
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  let html=DOWS.map(d=>`<span class="dp-dow">${d}</span>`).join('');
+  for(let i=0;i<firstDay;i++)html+=`<button class="dp-day dp-day-empty"></button>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const date=new Date(year,month,d);
+    const ts=date.getTime();
+    const sTs=dpStart?dpStart.getTime():null;
+    const eTs=dpEnd?dpEnd.getTime():null;
+    let cls='dp-day';
+    if(ts===today.getTime())cls+=' dp-day-today';
+    if(sTs&&ts===sTs)cls+=' dp-day-start';
+    if(eTs&&ts===eTs)cls+=' dp-day-end';
+    if(sTs&&eTs&&ts>sTs&&ts<eTs)cls+=' dp-day-in-range';
+    html+=`<button class="${cls}" onclick="dpClickDay(${year},${month},${d})">${d}</button>`;
+  }
+  grid.innerHTML=html;
+}
+function dpClickDay(year,month,day){
+  const clicked=new Date(year,month,day);
+  if(!dpStart||dpEnd||(dpStart&&clicked<dpStart)){dpStart=clicked;dpEnd=null;}
+  else{dpEnd=clicked;}
+  renderCalendars();
+}
+function dpPreset(days){
+  const end=new Date();end.setHours(0,0,0,0);
+  const start=new Date(end);start.setDate(start.getDate()-days+1);
+  dpStart=start;dpEnd=new Date(end);renderCalendars();
+}
+function dpPresetMTD(){
+  const now=new Date();now.setHours(0,0,0,0);
+  dpStart=new Date(now.getFullYear(),now.getMonth(),1);dpEnd=new Date(now);renderCalendars();
+}
+function dpClear(){
+  dpStart=null;dpEnd=null;dpAppliedStart=null;dpAppliedEnd=null;
+  document.getElementById('drp-label').textContent='All Dates';
+  document.getElementById('drp-btn').classList.remove('active');
+  closeDatePicker();applyFilters();
+}
+function dpApply(){
+  if(!dpStart)return;
+  dpAppliedStart=new Date(dpStart);
+  dpAppliedEnd=dpEnd?new Date(dpEnd):new Date(dpStart);
+  const fmt2=d=>d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const same=dpAppliedStart.getTime()===dpAppliedEnd.getTime();
+  document.getElementById('drp-label').textContent=same?fmt2(dpAppliedStart):`${fmt2(dpAppliedStart)} – ${fmt2(dpAppliedEnd)}`;
+  document.getElementById('drp-btn').classList.add('active');
+  closeDatePicker();applyFilters();
+}
+
 // ── Pagination ──
-function buildPagination(containerId, page, total, perPg, goFn) {
+function buildPagination(containerId,infoId,page,total,perPg,goFn){
   const totalPages=Math.ceil(total/perPg);
-  const start=(page-1)*perPg+1, end=Math.min(page*perPg,total);
-  const infoId=containerId.replace('pagination','page-info').replace('settle-pagination','settle-page-info');
-  const infoEl=containerId==='pagination'?document.getElementById('page-info'):document.getElementById('settle-page-info');
-  if(infoEl) infoEl.textContent=total?`Showing ${start}–${end} of ${total}`:'No results';
+  const start=(page-1)*perPg+1,end=Math.min(page*perPg,total);
+  const infoEl=document.getElementById(infoId);
+  if(infoEl)infoEl.textContent=total?`Showing ${start}–${end} of ${total}`:'No results';
   const pag=document.getElementById(containerId);
   if(totalPages<=1){pag.innerHTML='';return;}
   let html=`<button class="page-btn" onclick="${goFn}(${page-1})" ${page===1?'disabled':''}>‹</button>`;
@@ -743,12 +1014,10 @@ function buildPagination(containerId, page, total, perPg, goFn) {
   html+=`<button class="page-btn" onclick="${goFn}(${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
   pag.innerHTML=html;
 }
-
-function updatePagination(){buildPagination('pagination',currentPage,filteredData.length,perPage,'goPage');}
-function updateSettlePagination(){buildPagination('settle-pagination',settlePage,settleData.length,settlePerPage,'goSettlePage');}
-
-function goPage(p){const tp=Math.ceil(filteredData.length/perPage);if(p<1||p>tp)return;currentPage=p;renderTable();document.querySelector('.table-scroll').scrollIntoView({behavior:'smooth',block:'start'});}
-function goSettlePage(p){const tp=Math.ceil(settleData.length/settlePerPage);if(p<1||p>tp)return;settlePage=p;renderSettlement();document.querySelector('.settlement-content .table-scroll').scrollIntoView({behavior:'smooth',block:'start'});}
+function updatePagination(){buildPagination('pagination','page-info',currentPage,filteredData.length,perPage,'goPage');}
+function updateSettlePagination(){buildPagination('settle-pagination','settle-page-info',settlePage,settleFiltered.length,settlePerPage,'goSettlePage');}
+function goPage(p){const tp=Math.ceil(filteredData.length/perPage);if(p<1||p>tp)return;currentPage=p;renderTable();document.querySelector('.table-scroll')?.scrollIntoView({behavior:'smooth',block:'start'});}
+function goSettlePage(p){const tp=Math.ceil(settleFiltered.length/settlePerPage);if(p<1||p>tp)return;settlePage=p;renderSettlement();document.querySelector('.settlement-content .table-scroll')?.scrollIntoView({behavior:'smooth',block:'start'});}
 function changePerPage(v){perPage=parseInt(v);currentPage=1;renderTable();}
 function changeSettlePerPage(v){settlePerPage=parseInt(v);settlePage=1;renderSettlement();}
 
@@ -761,8 +1030,11 @@ function handleLogout(){
   document.getElementById('btn-login').classList.remove('loading');
   document.getElementById('btn-login').disabled=false;
   clearError();
-  currentUser=null; storeData=[]; filteredData=[]; settleData=[]; colFilters={};
+  currentUser=null;storeData=[];filteredData=[];settleAllData=[];settleFiltered=[];colFilters={};
   document.getElementById('search-input').value='';
+  document.getElementById('search-phone').value='';
+  document.getElementById('settle-search').value='';
+  dpAppliedStart=null;dpAppliedEnd=null;
 }
 </script>
 </body>
