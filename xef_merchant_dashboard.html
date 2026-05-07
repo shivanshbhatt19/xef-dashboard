@@ -433,19 +433,13 @@
     <div class="login-sub">Enter your store credentials to view your transaction data.</div>
 
     <div class="login-error-banner" id="login-error">
-      No store found for this DMS ID and MI ID combination. Please check your credentials.
+      No store found for this DMS ID. Please check your credentials.
     </div>
 
     <div class="field-group">
       <label class="field-label" for="input-dms">DMS ID</label>
       <input class="field-input" id="input-dms" type="text" placeholder="e.g. 444760" autocomplete="off" oninput="clearError()">
       <div class="field-error" id="err-dms">DMS ID is required</div>
-    </div>
-
-    <div class="field-group">
-      <label class="field-label" for="input-mi">MI ID</label>
-      <input class="field-input" id="input-mi" type="text" placeholder="e.g. 5178482779" autocomplete="off" oninput="clearError()">
-      <div class="field-error" id="err-mi">MI ID is required</div>
     </div>
 
     <button class="btn-login" id="btn-login" onclick="handleLogin()">View My Dashboard</button>
@@ -676,17 +670,12 @@ async function fetchData() {
 function clearError() {
   document.getElementById('login-error').classList.remove('show');
   document.getElementById('err-dms').classList.remove('show');
-  document.getElementById('err-mi').classList.remove('show');
 }
 
 async function handleLogin() {
   const dms = document.getElementById('input-dms').value.trim();
-  const mi  = document.getElementById('input-mi').value.trim();
 
-  let ok = true;
-  if (!dms) { document.getElementById('err-dms').classList.add('show'); ok = false; }
-  if (!mi)  { document.getElementById('err-mi').classList.add('show'); ok = false; }
-  if (!ok) return;
+  if (!dms) { document.getElementById('err-dms').classList.add('show'); return; }
 
   const btn = document.getElementById('btn-login');
   btn.classList.add('loading'); btn.disabled = true;
@@ -694,10 +683,7 @@ async function handleLogin() {
   try {
     if (!allData.length) allData = await fetchData();
 
-    const matched = allData.filter(r =>
-      String(r.dms_id).trim() === dms &&
-      String(r.mi_id).trim() === mi
-    );
+    const matched = allData.filter(r => String(r.dms_id).trim() === dms);
 
     if (!matched.length) {
       document.getElementById('login-error').classList.add('show');
@@ -706,7 +692,7 @@ async function handleLogin() {
     }
 
     storeData = matched;
-    bootDashboard(dms, mi, matched);
+    bootDashboard(dms, matched);
 
   } catch(e) {
     const err = document.getElementById('login-error');
@@ -716,11 +702,10 @@ async function handleLogin() {
   }
 }
 
-document.getElementById('input-dms').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('input-mi').focus(); });
-document.getElementById('input-mi').addEventListener('keydown', e => { if (e.key==='Enter') handleLogin(); });
+document.getElementById('input-dms').addEventListener('keydown', e => { if (e.key==='Enter') handleLogin(); });
 
 // ── Boot dashboard ──
-function bootDashboard(dms, mi, data) {
+function bootDashboard(dms, data) {
   const name = data[0].store_name || `Store ${dms}`;
   const short = name.length > 22 ? name.slice(0,20)+'…' : name;
 
@@ -745,7 +730,6 @@ function handleLogout() {
   document.getElementById('login-screen').style.display = '';
   document.getElementById('dashboard').classList.remove('visible');
   document.getElementById('input-dms').value = '';
-  document.getElementById('input-mi').value = '';
   document.getElementById('btn-login').classList.remove('loading');
   document.getElementById('btn-login').disabled = false;
   clearError();
