@@ -743,8 +743,9 @@ function applyFilters(){
     if(dpAppliedStart||dpAppliedEnd){
       const d=parseRowDate(r);
       if(!d)return false;
+      d.setHours(0,0,0,0);
       if(dpAppliedStart&&d<dpAppliedStart)return false;
-      if(dpAppliedEnd){const end=new Date(dpAppliedEnd);end.setHours(23,59,59,999);if(d>end)return false;}
+      if(dpAppliedEnd&&d>dpAppliedEnd)return false;
     }
     for(const[col,val]of Object.entries(colFilters)){
       if(!val)continue;
@@ -979,40 +980,44 @@ function renderCalendars(){
   if(m2>11){m2=0;y2++;}
   renderOneMonth(1,y2,m2);
 }
+function dpClickDay(year,month,day){
+  const clicked=new Date(year,month,day,0,0,0,0);
+  if(!dpStart||dpEnd){
+    dpStart=clicked; dpEnd=null;
+  } else {
+    if(clicked.getTime()===dpStart.getTime()){
+      // Same day clicked twice = single day range
+      dpEnd=new Date(clicked);
+    } else if(clicked<dpStart){
+      // Clicked earlier than start — swap
+      dpEnd=dpStart; dpStart=clicked;
+    } else {
+      dpEnd=clicked;
+    }
+  }
+  renderCalendars();
+}
 function renderOneMonth(idx,year,month){
   document.getElementById(`dp-m${idx}-label`).textContent=`${MONTHS[month]} ${year}`;
   const grid=document.getElementById(`dp-m${idx}`);
-  const today=new Date();today.setHours(0,0,0,0);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayTs=today.getTime();
   const firstDay=new Date(year,month,1).getDay();
   const daysInMonth=new Date(year,month+1,0).getDate();
+  const sTs=dpStart?dpStart.getTime():null;
+  const eTs=dpEnd?dpEnd.getTime():null;
   let html=DOWS.map(d=>`<span class="dp-dow">${d}</span>`).join('');
-  for(let i=0;i<firstDay;i++)html+=`<button class="dp-day dp-day-empty"></button>`;
+  for(let i=0;i<firstDay;i++) html+=`<button class="dp-day dp-day-empty"></button>`;
   for(let d=1;d<=daysInMonth;d++){
-    const date=new Date(year,month,d);
-    const ts=date.getTime();
-    const sTs=dpStart?dpStart.getTime():null;
-    const eTs=dpEnd?dpEnd.getTime():null;
+    const ts=new Date(year,month,d,0,0,0,0).getTime();
     let cls='dp-day';
-    if(ts===today.getTime())cls+=' dp-day-today';
-    if(sTs&&ts===sTs)cls+=' dp-day-start';
-    if(eTs&&ts===eTs)cls+=' dp-day-end';
-    if(sTs&&eTs&&ts>sTs&&ts<eTs)cls+=' dp-day-in-range';
+    if(ts===todayTs) cls+=' dp-day-today';
+    if(sTs!==null&&ts===sTs) cls+=' dp-day-start';
+    if(eTs!==null&&ts===eTs) cls+=' dp-day-end';
+    if(sTs!==null&&eTs!==null&&ts>sTs&&ts<eTs) cls+=' dp-day-in-range';
     html+=`<button class="${cls}" onclick="dpClickDay(${year},${month},${d})">${d}</button>`;
   }
   grid.innerHTML=html;
-}
-function dpClickDay(year,month,day){
-  const clicked=new Date(year,month,day);
-  if(!dpStart||dpEnd){
-    // Start fresh selection
-    dpStart=clicked;dpEnd=null;
-  } else {
-    // Second click — set end, ensure start <= end
-    if(clicked<dpStart){dpEnd=dpStart;dpStart=clicked;}
-    else if(clicked.getTime()===dpStart.getTime()){dpEnd=new Date(clicked);} // single day
-    else{dpEnd=clicked;}
-  }
-  renderCalendars();
 }
 function dpPreset(days){
   const end=new Date();end.setHours(0,0,0,0);
@@ -1030,14 +1035,14 @@ function dpClear(){
   closeDatePicker();applyFilters();
 }
 function dpApply(){
-  if(!dpStart)return;
+  if(!dpStart) return;
   dpAppliedStart=new Date(dpStart);
-  dpAppliedEnd=dpEnd?new Date(dpEnd):new Date(dpStart);
+  dpAppliedEnd=dpEnd ? new Date(dpEnd) : new Date(dpStart);
   const fmt2=d=>d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   const same=dpAppliedStart.getTime()===dpAppliedEnd.getTime();
-  document.getElementById('drp-label').textContent=same?fmt2(dpAppliedStart):`${fmt2(dpAppliedStart)} – ${fmt2(dpAppliedEnd)}`;
+  document.getElementById('drp-label').textContent=same ? fmt2(dpAppliedStart) : `${fmt2(dpAppliedStart)} – ${fmt2(dpAppliedEnd)}`;
   document.getElementById('drp-btn').classList.add('active');
-  closeDatePicker();applyFilters();
+  closeDatePicker(); applyFilters();
 }
 
 // ── Pagination ──
