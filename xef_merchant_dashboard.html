@@ -221,9 +221,9 @@
   .date-range-btn svg { color:var(--text-muted); flex-shrink:0; }
 
   .date-picker-panel {
-    display:none; position:absolute; top:calc(100% + 8px); left:0; z-index:200;
+    display:none; position:fixed; z-index:200;
     background:var(--surface); border:1px solid var(--border); border-radius:12px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.12); padding:16px; width:580px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.12); padding:16px; width:540px;
   }
   .date-picker-panel.open { display:block; }
   .dp-months { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
@@ -948,6 +948,21 @@ function toggleDatePicker(){
   dpEnd=dpAppliedEnd?new Date(dpAppliedEnd):null;
   renderCalendars();
   panel.classList.add('open');
+  // Position after making visible so we can measure
+  const btn=document.getElementById('drp-btn');
+  const btnRect=btn.getBoundingClientRect();
+  const panelW=540;
+  const panelH=panel.offsetHeight||320;
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
+  // Horizontal: align to button left, flip left if would overflow right
+  let left=btnRect.left;
+  if(left+panelW>vw-12) left=Math.max(12, vw-panelW-12);
+  // Vertical: below button, flip above if would overflow bottom
+  let top=btnRect.bottom+8;
+  if(top+panelH>vh-12) top=Math.max(12, btnRect.top-panelH-8);
+  panel.style.left=left+'px';
+  panel.style.top=top+'px';
 }
 function closeDatePicker(){document.getElementById('drp-panel')?.classList.remove('open');}
 document.addEventListener('click',e=>{const wrap=document.getElementById('drp-wrap');if(wrap&&!wrap.contains(e.target))closeDatePicker();});
