@@ -559,8 +559,15 @@
 
 <script>
 // ── DEV NOTE ──────────────────────────────────────────────────────────
-// Files required in same folder: xef_auth_lookup.csv, xef_rrf_auth.csv
+// Files required in same folder:
+//   xef_auth_lookup_v2.csv   — hashed auth table (no plaintext passwords)
+//   xef_rrf_auth.csv         — full transaction data
+//
 // Run: python3 -m http.server 8080
+//
+// Security vs v1:
+//   Passwords are SHA-256(salt+password) — leaked auth CSV ≠ usable creds
+//   Plain-text passwords live only in the offline sheet you share with stores
 // ─────────────────────────────────────────────────────────────────────
 
 let authLookup=[], allData=[], storeData=[];
@@ -589,8 +596,15 @@ function parseCSV(text){
     return row;
   });
 }
-async function fetchAuthLookup(){const r=await fetch('./xef_auth_lookup.csv');if(!r.ok)throw new Error(r.status);return parseCSV(await r.text());}
+async function fetchAuthLookup(){const r=await fetch('./xef_auth_lookup_v2.csv');if(!r.ok)throw new Error(r.status);return parseCSV(await r.text());}
 async function fetchTransactions(){const r=await fetch('./xef_rrf_auth.csv');if(!r.ok)throw new Error(r.status);return parseCSV(await r.text());}
+
+async function verifyPassword(input,salt,storedHash){
+  const enc=new TextEncoder();
+  const buf=await crypto.subtle.digest('SHA-256',enc.encode(salt+input));
+  const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  return hex===storedHash;
+}
 
 // ── Helpers ──
 const fmt=n=>'₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:0});
@@ -615,17 +629,26 @@ async function handleLogin(){
   try{
     if(!authLookup.length)authLookup=await fetchAuthLookup();
     if(!allData.length)allData=await fetchTransactions();
-    const auth=authLookup.find(r=>String(r.dms_id).trim()===dms&&String(r.password).trim()===pwd);
-    if(!auth){document.getElementById('login-error').classList.add('show');btn.classList.remove('loading');btn.disabled=false;return;}
-    currentUser={dms_id:auth.dms_id.trim(),store_type:auth.store_type.trim(),parent_dms_id:auth.parent_dms_id.trim()};
+
+    const authRow=authLookup.find(r=>String(r.dms_id).trim()===dms);
+    const passwordOk=authRow ? await verifyPassword(pwd,authRow.salt,authRow.password_hash) : false;
+
+    if(!authRow||!passwordOk){
+      document.getElementById('login-error').classList.add('show');
+      btn.classList.remove('loading');btn.disabled=false;return;
+    }
+
+    currentUser={dms_id:authRow.dms_id.trim(),store_type:authRow.store_type.trim(),parent_dms_id:authRow.parent_dms_id.trim()};
+
     if(currentUser.store_type==='RRF_parent')storeData=allData.filter(r=>String(r.parent_dms_id).trim()===currentUser.dms_id);
     else if(currentUser.store_type==='RRF_child')storeData=allData.filter(r=>String(r.Child_Id).trim()===currentUser.dms_id);
     else storeData=allData.filter(r=>String(r.dms_id).trim()===currentUser.dms_id);
+
     if(!storeData.length){const e=document.getElementById('login-error');e.textContent='Account verified but no transactions found.';e.classList.add('show');btn.classList.remove('loading');btn.disabled=false;return;}
     bootDashboard();
   }catch(e){
     const err=document.getElementById('login-error');
-    err.textContent='Could not load data. Ensure CSV files are in same folder and use python3 -m http.server 8080.';
+    err.textContent='Could not load data. Ensure xef_auth_lookup_v2.csv and xef_rrf_auth.csv are present, and run via python3 -m http.server 8080.';
     err.classList.add('show');btn.classList.remove('loading');btn.disabled=false;
   }
 }
@@ -1030,7 +1053,7 @@ function handleLogout(){
   document.getElementById('btn-login').classList.remove('loading');
   document.getElementById('btn-login').disabled=false;
   clearError();
-  currentUser=null;storeData=[];filteredData=[];settleAllData=[];settleFiltered=[];colFilters={};
+  currentUser=null;storeData=[];allData=[];filteredData=[];settleAllData=[];settleFiltered=[];colFilters={};
   document.getElementById('search-input').value='';
   document.getElementById('search-phone').value='';
   document.getElementById('settle-search').value='';
