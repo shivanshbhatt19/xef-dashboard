@@ -1003,8 +1003,15 @@ function renderOneMonth(idx,year,month){
 }
 function dpClickDay(year,month,day){
   const clicked=new Date(year,month,day);
-  if(!dpStart||dpEnd||(dpStart&&clicked<dpStart)){dpStart=clicked;dpEnd=null;}
-  else{dpEnd=clicked;}
+  if(!dpStart||dpEnd){
+    // Start fresh selection
+    dpStart=clicked;dpEnd=null;
+  } else {
+    // Second click — set end, ensure start <= end
+    if(clicked<dpStart){dpEnd=dpStart;dpStart=clicked;}
+    else if(clicked.getTime()===dpStart.getTime()){dpEnd=new Date(clicked);} // single day
+    else{dpEnd=clicked;}
+  }
   renderCalendars();
 }
 function dpPreset(days){
