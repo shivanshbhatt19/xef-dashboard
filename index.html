@@ -420,7 +420,7 @@
                 <div class="dp-months">
                   <div>
                     <div class="dp-month-header">
-                      <button class="dp-month-nav" onclick="dpNav(-1)">‹</button>
+                      <button class="dp-month-nav" onmousedown="event.stopPropagation();dpNav(-1)">‹</button>
                       <span class="dp-month-label" id="dp-m0-label">—</span>
                       <span></span>
                     </div>
@@ -430,21 +430,21 @@
                     <div class="dp-month-header">
                       <span></span>
                       <span class="dp-month-label" id="dp-m1-label">—</span>
-                      <button class="dp-month-nav" onclick="dpNav(1)">›</button>
+                      <button class="dp-month-nav" onmousedown="event.stopPropagation();dpNav(1)">›</button>
                     </div>
                     <div class="dp-grid" id="dp-m1"></div>
                   </div>
                 </div>
                 <div class="dp-footer">
                   <div class="dp-presets">
-                    <button class="dp-preset" onclick="dpPreset(7)">Last 7 days</button>
-                    <button class="dp-preset" onclick="dpPreset(30)">Last 30 days</button>
-                    <button class="dp-preset" onclick="dpPreset(90)">Last 90 days</button>
-                    <button class="dp-preset" onclick="dpPresetMTD()">MTD</button>
+                    <button class="dp-preset" onmousedown="event.stopPropagation()" onclick="dpPreset(7)">Last 7 days</button>
+                    <button class="dp-preset" onmousedown="event.stopPropagation()" onclick="dpPreset(30)">Last 30 days</button>
+                    <button class="dp-preset" onmousedown="event.stopPropagation()" onclick="dpPreset(90)">Last 90 days</button>
+                    <button class="dp-preset" onmousedown="event.stopPropagation()" onclick="dpPresetMTD()">MTD</button>
                   </div>
                   <div class="dp-actions">
-                    <button class="dp-clear" onclick="dpClear()">Clear</button>
-                    <button class="dp-apply" onclick="dpApply()">Apply</button>
+                    <button class="dp-clear" onmousedown="event.stopPropagation()" onclick="dpClear()">Clear</button>
+                    <button class="dp-apply" onmousedown="event.stopPropagation()" onclick="dpApply()">Apply</button>
                   </div>
                 </div>
               </div>
@@ -966,7 +966,12 @@ function toggleDatePicker(){
   panel.style.top=top+'px';
 }
 function closeDatePicker(){document.getElementById('drp-panel')?.classList.remove('open');}
-document.addEventListener('click',e=>{const wrap=document.getElementById('drp-wrap');if(wrap&&!wrap.contains(e.target))closeDatePicker();});
+
+// Outside click — use mousedown so it fires before the button's click
+document.addEventListener('mousedown', e=>{
+  const wrap=document.getElementById('drp-wrap');
+  if(wrap&&!wrap.contains(e.target)) closeDatePicker();
+});
 
 function dpNav(dir){
   dpViewMonth+=dir;
@@ -982,14 +987,14 @@ function renderCalendars(){
 }
 function dpClickDay(year,month,day){
   const clicked=new Date(year,month,day,0,0,0,0);
-  if(!dpStart||dpEnd){
+  if(!dpStart || dpEnd){
+    // Start a new selection
     dpStart=clicked; dpEnd=null;
   } else {
+    // Complete the selection
     if(clicked.getTime()===dpStart.getTime()){
-      // Same day clicked twice = single day range
-      dpEnd=new Date(clicked);
+      dpEnd=new Date(clicked); // single day — same start and end
     } else if(clicked<dpStart){
-      // Clicked earlier than start — swap
       dpEnd=dpStart; dpStart=clicked;
     } else {
       dpEnd=clicked;
@@ -1015,7 +1020,8 @@ function renderOneMonth(idx,year,month){
     if(sTs!==null&&ts===sTs) cls+=' dp-day-start';
     if(eTs!==null&&ts===eTs) cls+=' dp-day-end';
     if(sTs!==null&&eTs!==null&&ts>sTs&&ts<eTs) cls+=' dp-day-in-range';
-    html+=`<button class="${cls}" onclick="dpClickDay(${year},${month},${d})">${d}</button>`;
+    // Use onmousedown instead of onclick to avoid conflict with outside-click handler
+    html+=`<button class="${cls}" onmousedown="event.stopPropagation();dpClickDay(${year},${month},${d})">${d}</button>`;
   }
   grid.innerHTML=html;
 }
