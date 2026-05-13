@@ -46,9 +46,8 @@
     position:relative; z-index:1; background:rgba(255,255,255,0.04);
     border:1px solid rgba(255,255,255,0.09); border-radius:20px; padding:44px 48px; width:420px; backdrop-filter:blur(8px);
   }
-  .login-logo { display:flex; align-items:center; gap:12px; margin-bottom:36px; }
-  .login-logo-wordmark { color:white; font-size:22px; font-weight:700; letter-spacing:-0.5px; }
-  .login-logo-sub { color:rgba(255,255,255,0.3); font-size:11px; letter-spacing:0.5px; text-transform:uppercase; margin-top:2px; }
+  .login-logo { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:36px; }
+  .login-logo-wordmark { color:white; font-size:26px; font-weight:700; letter-spacing:-1px; }
   .login-heading { color:white; font-size:22px; font-weight:600; letter-spacing:-0.4px; margin-bottom:6px; }
   .login-sub { color:rgba(255,255,255,0.38); font-size:13px; margin-bottom:32px; line-height:1.5; }
   .field-group { margin-bottom:18px; }
@@ -288,7 +287,6 @@
       </svg>
       <div>
         <div class="login-logo-wordmark">axio</div>
-        <div class="login-logo-sub">XEF Retailer Portal</div>
       </div>
     </div>
     <div class="login-heading">Access your dashboard</div>
@@ -306,6 +304,14 @@
     </div>
     <button class="btn-login" id="btn-login" onclick="handleLogin()">View My Dashboard</button>
     <div class="login-footer-note">Access is restricted to authorised XEF retail partners</div>
+
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.07);text-align:center;">
+      <div style="font-size:11.5px;color:rgba(255,255,255,0.25);margin-bottom:8px;">Need help accessing your dashboard?</div>
+      <a href="https://wa.me/+917899921380" target="_blank" style="display:inline-flex;align-items:center;gap:7px;text-decoration:none;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.25);border-radius:8px;padding:8px 14px;transition:all 0.15s;" onmouseover="this.style.background='rgba(37,211,102,0.18)'" onmouseout="this.style.background='rgba(37,211,102,0.1)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <span style="font-size:12px;font-weight:500;color:#25d366;">Axio Merchant Support</span>
+      </a>
+    </div>
   </div>
 </div>
 
@@ -395,9 +401,9 @@
               <div class="stat-sub">months avg.</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">VAS Count</div>
+              <div class="stat-label">VAS Adoption</div>
               <div class="stat-value" id="stat-vas">—</div>
-              <div class="stat-sub">add-ons sold</div>
+              <div class="stat-sub">of total transactions</div>
             </div>
           </div>
           <div class="controls-bar">
@@ -684,6 +690,7 @@ function bootDashboard(){
   switchPane('ledger');
   document.getElementById('login-screen').style.display='none';
   document.getElementById('dashboard').classList.add('visible');
+  startSessionTimeout();
 }
 
 // ── Pane switch ──
@@ -712,6 +719,7 @@ function getLedgerCols(){
   if(isRRFParent()){cols.push({key:'store_name',label:'Store Name'});cols.push({key:'Child_Id',label:'Child DMS'});}
   cols.push(
     {key:'sku_name',label:'Device'},
+    {key:'imei',label:'IMEI'},
     {key:'vas_name',label:'VAS'},
     {key:'aiot_name',label:'AIOT'},
     {key:'cart_value',label:'Cart Value'},
@@ -779,11 +787,12 @@ function updateStats(){
   const tenures=filteredData.map(r=>parseFloat(r.tenure)||0).filter(t=>t>0);
   const avgTen=tenures.length?(tenures.reduce((s,t)=>s+t,0)/tenures.length).toFixed(1):'—';
   const vasCount=filteredData.filter(r=>r.vas_name&&r.vas_name.trim()).length;
+  const vasAdoption=total>0?((vasCount/total)*100).toFixed(1)+'%':'—';
   document.getElementById('stat-total').textContent=total;
   document.getElementById('stat-sub').textContent=total<storeData.length?`of ${storeData.length} total`:'transactions';
   document.getElementById('stat-cart').textContent=cartSum?fmt(cartSum):'—';
   document.getElementById('stat-tenure').textContent=avgTen;
-  document.getElementById('stat-vas').textContent=vasCount;
+  document.getElementById('stat-vas').textContent=vasAdoption;
   document.getElementById('result-count').innerHTML=`<strong>${total}</strong> result${total!==1?'s':''}`;
 }
 
@@ -814,6 +823,7 @@ function renderCell(key,r,i,settled,globalIdx){
     case 'store_name':       return `<span style="font-size:12px;">${esc(r.store_name||'—')}</span>`;
     case 'Child_Id':         return `<span style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text-secondary)">${esc(r.Child_Id||'—')}</span>`;
     case 'sku_name':         return `<div class="device-cell"><div class="device-name">${esc(r.sku_name||'—')}</div><div class="device-variant">${esc(r.sku_variant||'')}</div></div>`;
+    case 'imei':             return r.imei?`<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-secondary);letter-spacing:0.3px;">${esc(r.imei)}</span>`:`<span style="color:var(--text-muted);font-size:11.5px;">—</span>`;
     case 'vas_name':         return r.vas_name?`<span class="vas-badge">${esc(r.vas_name)}</span>`:`<span style="color:var(--text-muted);font-size:11.5px;">—</span>`;
     case 'aiot_name':        return r.aiot_name?`<span class="aiot-badge" title="${esc(r.aiot_name)}">${esc(r.aiot_name)}</span>`:`<span style="color:var(--text-muted);font-size:11.5px;">—</span>`;
     case 'cart_value':       return `<span class="amount">${fmtAmt(r.cart_value)}</span>`;
@@ -1091,7 +1101,76 @@ function handleLogout(){
   document.getElementById('search-phone').value='';
   document.getElementById('settle-search').value='';
   dpAppliedStart=null;dpAppliedEnd=null;
+  clearSessionTimeout();
 }
+
+// ── Session timeout (1hr inactivity) ──
+const SESSION_TIMEOUT_MS = 15 * 60 * 1000;      // 15 minutes
+const SESSION_WARNING_MS = 13 * 60 * 1000;      // warn at 13 min
+let sessionTimer = null;
+let sessionWarnTimer = null;
+let sessionWarnEl = null;
+
+function startSessionTimeout() {
+  clearSessionTimeout();
+  sessionWarnTimer = setTimeout(showSessionWarning, SESSION_WARNING_MS);
+  sessionTimer     = setTimeout(sessionExpired,     SESSION_TIMEOUT_MS);
+}
+
+function clearSessionTimeout() {
+  clearTimeout(sessionTimer);
+  clearTimeout(sessionWarnTimer);
+  sessionTimer = null; sessionWarnTimer = null;
+  hideSessionWarning();
+}
+
+function resetSessionTimeout() {
+  if(!currentUser) return; // only active when logged in
+  clearSessionTimeout();
+  startSessionTimeout();
+}
+
+function showSessionWarning() {
+  if(!currentUser) return;
+  if(!sessionWarnEl) {
+    sessionWarnEl = document.createElement('div');
+    sessionWarnEl.style.cssText = `
+      position:fixed; bottom:24px; right:24px; z-index:9999;
+      background:#1a1d22; color:white; border:1px solid rgba(255,255,255,0.12);
+      border-radius:12px; padding:14px 18px; font-family:'DM Sans',sans-serif;
+      font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,0.25);
+      display:flex; align-items:center; gap:12px; max-width:320px;
+    `;
+    sessionWarnEl.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>
+        <div style="font-weight:600;margin-bottom:2px;">Session expiring soon</div>
+        <div style="color:rgba(255,255,255,0.5);font-size:12px;">You'll be logged out in 2 minutes due to inactivity.</div>
+      </div>
+      <button onmousedown="resetSessionTimeout()" style="background:#8dc63f;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;flex-shrink:0;">Stay logged in</button>
+    `;
+    document.body.appendChild(sessionWarnEl);
+  }
+  sessionWarnEl.style.display = 'flex';
+}
+
+function hideSessionWarning() {
+  if(sessionWarnEl) sessionWarnEl.style.display = 'none';
+}
+
+function sessionExpired() {
+  hideSessionWarning();
+  handleLogout();
+  // Show expired message on login screen
+  const err = document.getElementById('login-error');
+  err.textContent = 'Your session expired after 15 minutes of inactivity. Please log in again.';
+  err.classList.add('show');
+}
+
+// Reset timer on any user interaction
+['mousedown','keydown','scroll','touchstart'].forEach(evt =>
+  document.addEventListener(evt, () => { if(currentUser) resetSessionTimeout(); }, { passive:true })
+);
 </script>
 </body>
 </html>
