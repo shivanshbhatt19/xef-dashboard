@@ -562,7 +562,7 @@
 //   Plain-text passwords live only in the offline sheet you share with stores
 // ─────────────────────────────────────────────────────────────────────
 
-let authLookup=[], allData=[], storeData=[];
+let allData=[], storeData=[];
 let filteredData=[], currentUser=null;
 let currentPage=1, perPage=25;
 let sortCol='transaction_date', sortDir='desc';
@@ -575,28 +575,9 @@ let dpStart=null, dpEnd=null, dpSelecting=null;
 let dpAppliedStart=null, dpAppliedEnd=null;
 let dpViewYear, dpViewMonth;
 
-// ── CSV ──
-function parseCSV(text){
-  const lines=text.trim().split('\n');
-  const headers=lines[0].split(',').map(h=>h.trim().replace(/\r/g,''));
-  return lines.slice(1).map((line,idx)=>{
-    const cols=[];let cur='',inQ=false;
-    for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=ch;}}
-    cols.push(cur.trim());
-    const row={_sno:idx+1};
-    headers.forEach((h,i)=>{row[h]=(cols[i]||'').replace(/\r/g,'');});
-    return row;
-  });
-}
-async function fetchAuthLookup(){const r=await fetch('./xef_auth_lookup_v2.csv');if(!r.ok)throw new Error(r.status);return parseCSV(await r.text());}
-async function fetchTransactions(){const r=await fetch('./xef_rrf_auth.csv');if(!r.ok)throw new Error(r.status);return parseCSV(await r.text());}
-
-async function verifyPassword(input,salt,storedHash){
-  const enc=new TextEncoder();
-  const buf=await crypto.subtle.digest('SHA-256',enc.encode(salt+input));
-  const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  return hex===storedHash;
-}
+// ── API ──
+const API_BASE='https://si8cd0cl4d.execute-api.ap-south-1.amazonaws.com';
+let authToken=null;
 
 // ── Helpers ──
 const fmt=n=>'₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:0});
@@ -619,28 +600,42 @@ async function handleLogin(){
   const btn=document.getElementById('btn-login');
   btn.classList.add('loading');btn.disabled=true;
   try{
-    if(!authLookup.length)authLookup=await fetchAuthLookup();
-    if(!allData.length)allData=await fetchTransactions();
+    // Call login API
+    const loginRes=await fetch(`${API_BASE}/login`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dms_id:dms,password:pwd})
+    });
+    const loginData=await loginRes.json();
 
-    const authRow=authLookup.find(r=>String(r.dms_id).trim()===dms);
-    const passwordOk=authRow ? await verifyPassword(pwd,authRow.salt,authRow.password_hash) : false;
-
-    if(!authRow||!passwordOk){
+    if(!loginRes.ok){
       document.getElementById('login-error').classList.add('show');
       btn.classList.remove('loading');btn.disabled=false;return;
     }
 
-    currentUser={dms_id:authRow.dms_id.trim(),store_type:authRow.store_type.trim(),parent_dms_id:authRow.parent_dms_id.trim()};
+    authToken=loginData.token;
+    currentUser={dms_id:loginData.dms_id,store_type:loginData.store_type,parent_dms_id:loginData.parent_dms_id,store_name:loginData.store_name};
 
-    if(currentUser.store_type==='RRF_parent')storeData=allData.filter(r=>String(r.parent_dms_id).trim()===currentUser.dms_id);
-    else if(currentUser.store_type==='RRF_child')storeData=allData.filter(r=>String(r.Child_Id).trim()===currentUser.dms_id);
-    else storeData=allData.filter(r=>String(r.dms_id).trim()===currentUser.dms_id);
+    // Fetch transaction data
+    const dataRes=await fetch(`${API_BASE}/data`,{
+      headers:{'Authorization':`Bearer ${authToken}`}
+    });
+    const dataJson=await dataRes.json();
+
+    if(!dataRes.ok){
+      const err=document.getElementById('login-error');
+      err.textContent='Account verified but could not load transactions.';
+      err.classList.add('show');btn.classList.remove('loading');btn.disabled=false;return;
+    }
+
+    storeData=dataJson.transactions.map((r,idx)=>({...r,_sno:idx+1,Child_Id:r.child_id}));
+    allData=storeData;
 
     if(!storeData.length){const e=document.getElementById('login-error');e.textContent='Account verified but no transactions found.';e.classList.add('show');btn.classList.remove('loading');btn.disabled=false;return;}
     bootDashboard();
   }catch(e){
     const err=document.getElementById('login-error');
-    err.textContent='Could not load data. Ensure xef_auth_lookup_v2.csv and xef_rrf_auth.csv are present, and run via python3 -m http.server 8080.';
+    err.textContent='Could not connect to server. Please try again.';
     err.classList.add('show');btn.classList.remove('loading');btn.disabled=false;
   }
 }
@@ -1082,7 +1077,7 @@ function handleLogout(){
   document.getElementById('btn-login').classList.remove('loading');
   document.getElementById('btn-login').disabled=false;
   clearError();
-  currentUser=null;storeData=[];allData=[];filteredData=[];settleAllData=[];settleFiltered=[];colFilters={};
+  currentUser=null;authToken=null;storeData=[];allData=[];filteredData=[];settleAllData=[];settleFiltered=[];colFilters={};
   document.getElementById('search-input').value='';
   document.getElementById('search-phone').value='';
   document.getElementById('settle-search').value='';
