@@ -478,7 +478,6 @@
           </div>
         </header>
         <div class="settlement-content">
-          <!-- 9. Stats strip -->
           <div class="settle-stats">
             <div class="stat-card">
               <div class="stat-label">Total Transactions</div>
@@ -496,7 +495,6 @@
               <div class="stat-sub">transactions</div>
             </div>
           </div>
-          <!-- 7. Search bar -->
           <div class="controls-bar" style="margin-bottom:14px;">
             <div class="search-wrap">
               <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -550,18 +548,6 @@
 </div>
 
 <script>
-// ── DEV NOTE ──────────────────────────────────────────────────────────
-// Files required in same folder:
-//   xef_auth_lookup_v2.csv   — hashed auth table (no plaintext passwords)
-//   xef_rrf_auth.csv         — full transaction data
-//
-// Run: python3 -m http.server 8080
-//
-// Security vs v1:
-//   Passwords are SHA-256(salt+password) — leaked auth CSV ≠ usable creds
-//   Plain-text passwords live only in the offline sheet you share with stores
-// ─────────────────────────────────────────────────────────────────────
-
 let allData=[], storeData=[];
 let filteredData=[], currentUser=null;
 let currentPage=1, perPage=25;
@@ -570,7 +556,6 @@ let colFilters={};
 let settleAllData=[], settleFiltered=[], settlePage=1, settlePerPage=25;
 let settleSortCol='transaction_date', settleSortDir='desc';
 let pendingScrollIdx=null;
-// Date range
 let dpStart=null, dpEnd=null, dpSelecting=null;
 let dpAppliedStart=null, dpAppliedEnd=null;
 let dpViewYear, dpViewMonth;
@@ -600,7 +585,6 @@ async function handleLogin(){
   const btn=document.getElementById('btn-login');
   btn.classList.add('loading');btn.disabled=true;
   try{
-    // Call login API
     const loginRes=await fetch(`${API_BASE}/login`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -616,9 +600,9 @@ async function handleLogin(){
     authToken=loginData.token;
     currentUser={dms_id:loginData.dms_id,store_type:loginData.store_type,parent_dms_id:loginData.parent_dms_id,store_name:loginData.store_name};
 
-    // Fetch transaction data
+    // Fetch transaction data — using X-Auth-Token to avoid HTTP API Gateway stripping Authorization header
     const dataRes=await fetch(`${API_BASE}/data`,{
-      headers:{'Authorization':`Bearer ${authToken}`}
+      headers:{'X-Auth-Token':authToken}
     });
     const dataJson=await dataRes.json();
 
@@ -712,7 +696,6 @@ function getLedgerCols(){
 
 function buildTableHead(){
   const cols=getLedgerCols();
-  // # col has no filter input (feedback #5)
   document.getElementById('table-head').innerHTML=`<tr>
     <th><div class="th-inner"><span class="th-label" style="cursor:default">#</span></div></th>
     ${cols.map(c=>`<th><div class="th-inner">
@@ -831,7 +814,6 @@ function goToLedger(storeDataIdx){
   const row=storeData[storeDataIdx];
   let idx=filteredData.indexOf(row);
   if(idx===-1){
-    // clear filters to find the row
     document.getElementById('search-input').value='';
     document.getElementById('search-phone').value='';
     colFilters={};dpAppliedStart=null;dpAppliedEnd=null;
@@ -940,17 +922,14 @@ function toggleDatePicker(){
   dpEnd=dpAppliedEnd?new Date(dpAppliedEnd):null;
   renderCalendars();
   panel.classList.add('open');
-  // Position after making visible so we can measure
   const btn=document.getElementById('drp-btn');
   const btnRect=btn.getBoundingClientRect();
   const panelW=540;
   const panelH=panel.offsetHeight||320;
   const vw=window.innerWidth;
   const vh=window.innerHeight;
-  // Horizontal: align to button left, flip left if would overflow right
   let left=btnRect.left;
   if(left+panelW>vw-12) left=Math.max(12, vw-panelW-12);
-  // Vertical: below button, flip above if would overflow bottom
   let top=btnRect.bottom+8;
   if(top+panelH>vh-12) top=Math.max(12, btnRect.top-panelH-8);
   panel.style.left=left+'px';
@@ -958,7 +937,6 @@ function toggleDatePicker(){
 }
 function closeDatePicker(){document.getElementById('drp-panel')?.classList.remove('open');}
 
-// Outside click — use mousedown so it fires before the button's click
 document.addEventListener('mousedown', e=>{
   const wrap=document.getElementById('drp-wrap');
   if(wrap&&!wrap.contains(e.target)) closeDatePicker();
@@ -979,12 +957,10 @@ function renderCalendars(){
 function dpClickDay(year,month,day){
   const clicked=new Date(year,month,day,0,0,0,0);
   if(!dpStart || dpEnd){
-    // Start a new selection
     dpStart=clicked; dpEnd=null;
   } else {
-    // Complete the selection
     if(clicked.getTime()===dpStart.getTime()){
-      dpEnd=new Date(clicked); // single day — same start and end
+      dpEnd=new Date(clicked);
     } else if(clicked<dpStart){
       dpEnd=dpStart; dpStart=clicked;
     } else {
@@ -1011,7 +987,6 @@ function renderOneMonth(idx,year,month){
     if(sTs!==null&&ts===sTs) cls+=' dp-day-start';
     if(eTs!==null&&ts===eTs) cls+=' dp-day-end';
     if(sTs!==null&&eTs!==null&&ts>sTs&&ts<eTs) cls+=' dp-day-in-range';
-    // Use onmousedown instead of onclick to avoid conflict with outside-click handler
     html+=`<button class="${cls}" onmousedown="event.stopPropagation();dpClickDay(${year},${month},${d})">${d}</button>`;
   }
   grid.innerHTML=html;
@@ -1085,9 +1060,9 @@ function handleLogout(){
   clearSessionTimeout();
 }
 
-// ── Session timeout (1hr inactivity) ──
-const SESSION_TIMEOUT_MS = 15 * 60 * 1000;      // 15 minutes
-const SESSION_WARNING_MS = 13 * 60 * 1000;      // warn at 13 min
+// ── Session timeout ──
+const SESSION_TIMEOUT_MS = 15 * 60 * 1000;
+const SESSION_WARNING_MS = 13 * 60 * 1000;
 let sessionTimer = null;
 let sessionWarnTimer = null;
 let sessionWarnEl = null;
@@ -1106,7 +1081,7 @@ function clearSessionTimeout() {
 }
 
 function resetSessionTimeout() {
-  if(!currentUser) return; // only active when logged in
+  if(!currentUser) return;
   clearSessionTimeout();
   startSessionTimeout();
 }
@@ -1142,13 +1117,11 @@ function hideSessionWarning() {
 function sessionExpired() {
   hideSessionWarning();
   handleLogout();
-  // Show expired message on login screen
   const err = document.getElementById('login-error');
   err.textContent = 'Your session expired after 15 minutes of inactivity. Please log in again.';
   err.classList.add('show');
 }
 
-// Reset timer on any user interaction
 ['mousedown','keydown','scroll','touchstart'].forEach(evt =>
   document.addEventListener(evt, () => { if(currentUser) resetSessionTimeout(); }, { passive:true })
 );
