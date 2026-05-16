@@ -608,7 +608,7 @@ async function handleLogin(){
 
     if(!dataRes.ok){
       const err=document.getElementById('login-error');
-      err.textContent='Account verified but could not load transactions.';
+      err.textContent='Invalid DMS ID or password. Please check your credentials.';
       err.classList.add('show');btn.classList.remove('loading');btn.disabled=false;return;
     }
 
